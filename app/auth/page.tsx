@@ -1,25 +1,25 @@
 "use client";
-import Image from "next/image";
-
+import AuthForm from "@/components/AuthForm";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import React, { useEffect } from "react";
-import User from "@/components/User";
 
-export default function Home() {
+const page = () => {
   const session = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (session.status === "unauthenticated") {
-      router.push("/auth");
+    if (session.status === "authenticated") {
+      router.push("/");
     }
   }, [session]);
 
   if (session.status === "loading") return <div>loading...</div>;
   return (
-    <main className="flex min-h-screen bg-neutral-900 flex-col items-center justify-center p-10">
-      <User />
-    </main>
+    <div className="h-screen w-full bg-neutral-900 flex justify-center items-center ">
+      <AuthForm />
+    </div>
   );
-}
+};
+
+export default page;
