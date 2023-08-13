@@ -37,34 +37,30 @@ export const authOptions: NextAuthOptions = {
           type: "password",
         },
       },
-      async authorize(credentials, request) {
+      async authorize(credentials) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and Password Required");
         }
-        try {
-          const user = await prisma.user.findUnique({
-            where: {
-              email: credentials.email,
-            },
-          });
-          if (!user || !user?.hashedPassword) {
-            throw new Error("Email does not exist");
-          }
 
-          const isCorrectPassword = await compare(
-            credentials.password,
-            user.hashedPassword
-          );
-
-          if (!isCorrectPassword) {
-            throw new Error("Incorrect password");
-          }
-
-          return user;
-        } catch (error) {
-          console.log(error);
-          throw new Error("Error during authentication");
+        const user = await prisma.user.findUnique({
+          where: {
+            email: credentials.email,
+          },
+        });
+        if (!user || !user?.hashedPassword) {
+          throw new Error("Invalid Credentials");
         }
+
+        const isCorrectPassword = await compare(
+          credentials.password,
+          user.hashedPassword
+        );
+
+        if (!isCorrectPassword) {
+          throw new Error("Invalid Credentials");
+        }
+
+        return user;
       },
     }),
   ],

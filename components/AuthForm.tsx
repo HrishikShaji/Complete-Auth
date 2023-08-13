@@ -1,10 +1,12 @@
 "use client";
-import React, { ChangeEvent, FormEvent, useState } from "react";
+import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { AiOutlineGoogle, AiOutlineGithub } from "react-icons/ai";
 import { BiLogoDiscordAlt } from "react-icons/bi";
 import InputItem from "./InputItem";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import { toast } from "react-hot-toast";
+import { useRouter } from "next/navigation";
+import ClipLoader from "react-spinners/ClipLoader";
 
 type InputType = {
   name: string;
@@ -35,6 +37,16 @@ const AuthForm = () => {
     email: "",
     password: "",
   });
+  const [loading, setLoading] = useState<boolean>(false);
+
+  const router = useRouter();
+  const session = useSession();
+
+  useEffect(() => {
+    if (session.status === "authenticated") {
+      router.push("/");
+    }
+  }, [session]);
 
   const loginInputs = [
     {
@@ -88,25 +100,40 @@ const AuthForm = () => {
       password: registerValues.password,
     };
 
-    const response = await fetch("/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(registerData),
-    });
-
-    const loginData: LoginData = {
-      email: registerValues.email,
-      password: registerValues.password,
-    };
-
     try {
-      await signIn("credentials", { loginData, redirect: false });
-    } catch (error: any) {
-      console.log(error);
-      toast.error(error);
-    }
+      setLoading(true);
 
-    console.log(response);
+      const res = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(registerData),
+      });
+
+      const data = await res.json();
+      console.log(data);
+
+      if (data?.error) {
+        toast.error(data.error);
+      } else {
+        const loginData: LoginData = {
+          email: registerValues.email,
+          password: registerValues.password,
+        };
+
+        const response = await signIn("credentials", {
+          ...loginData,
+          redirect: false,
+        });
+        if (response?.error) {
+          toast.error(response.error);
+        }
+      }
+    } catch (error) {
+      toast.error("An error occured");
+    } finally {
+      setLoading(false);
+      router.push("/");
+    }
   };
 
   const handleLogin = async (e: FormEvent) => {
@@ -116,9 +143,19 @@ const AuthForm = () => {
       password: loginValues.password,
     };
     try {
-      await signIn("credentials", { ...loginData, redirect: false });
+      setLoading(true);
+      const response = await signIn("credentials", {
+        ...loginData,
+        redirect: false,
+      });
+      if (response?.error) {
+        toast.error(response.error);
+      }
     } catch (error) {
-      console.log(error);
+      toast.error("An error occured");
+    } finally {
+      setLoading(false);
+      router.push("/");
     }
 
     console.log(loginValues);
@@ -138,7 +175,7 @@ const AuthForm = () => {
             <button
               type="submit"
               className="bg-white font-semibold rounded-md py-2">
-              Sign In
+              {loading ? <ClipLoader size={10} color="black" /> : "Sign In"}
             </button>
           </form>
         ) : (
@@ -153,7 +190,7 @@ const AuthForm = () => {
             <button
               type="submit"
               className="bg-white font-semibold rounded-md py-2">
-              Sign Up
+              {loading ? <ClipLoader size={10} color="black" /> : "Sign Up"}
             </button>
           </form>
         )}

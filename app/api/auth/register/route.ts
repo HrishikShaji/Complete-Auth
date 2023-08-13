@@ -27,8 +27,8 @@ const handler = async (req: NextRequest, res: NextResponse) => {
     });
 
     return NextResponse.json("Account created");
-  } catch (error) {
-    return NextResponse.json(error);
+  } catch (error: any) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 };
 
