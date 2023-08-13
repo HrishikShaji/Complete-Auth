@@ -6,6 +6,8 @@ import GithubProvider from "next-auth/providers/github";
 import GoogleProvider from "next-auth/providers/google";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import prisma from "@/libs/prisma";
+import { NextRequest, NextResponse } from "next/server";
+import { NextApiRequest, NextApiResponse } from "next";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -18,8 +20,8 @@ export const authOptions: NextAuthOptions = {
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
     DiscordProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+      clientId: process.env.DISCORD_CLIENT_ID || "",
+      clientSecret: process.env.DISCORD_CLIENT_SECRET || "",
     }),
     CredentialsProvider({
       id: "credentials",
@@ -35,8 +37,7 @@ export const authOptions: NextAuthOptions = {
           type: "password",
         },
       },
-      async authorize(credentials) {
-        console.log(credentials);
+      async authorize(credentials, request) {
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Email and Password Required");
         }
@@ -67,9 +68,7 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  pages: {
-    signIn: "/auth",
-  },
+
   callbacks: {
     jwt: async ({ token, user }) => {
       user && (token.user = user.id);
@@ -90,6 +89,12 @@ export const authOptions: NextAuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
 };
 
-const handler = NextAuth(authOptions);
+const handler = async (request: NextApiRequest, response: NextApiResponse) => {
+  try {
+    return await NextAuth(request, response, authOptions);
+  } catch (error: any) {
+    response.status(401).json({ error: error.message });
+  }
+};
 
 export { handler as GET, handler as POST };

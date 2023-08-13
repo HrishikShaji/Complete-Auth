@@ -1,10 +1,10 @@
 "use client";
-import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import React, { ChangeEvent, FormEvent, useState } from "react";
 import { AiOutlineGoogle, AiOutlineGithub } from "react-icons/ai";
 import { BiLogoDiscordAlt } from "react-icons/bi";
 import InputItem from "./InputItem";
-import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
+import { toast } from "react-hot-toast";
 
 type InputType = {
   name: string;
@@ -99,7 +99,12 @@ const AuthForm = () => {
       password: registerValues.password,
     };
 
-    await signIn("credentials", loginData);
+    try {
+      await signIn("credentials", { loginData, redirect: false });
+    } catch (error: any) {
+      console.log(error);
+      toast.error(error);
+    }
 
     console.log(response);
   };
@@ -110,7 +115,12 @@ const AuthForm = () => {
       email: loginValues.email,
       password: loginValues.password,
     };
-    await signIn("credentials", loginData);
+    try {
+      await signIn("credentials", { ...loginData, redirect: false });
+    } catch (error) {
+      console.log(error);
+    }
+
     console.log(loginValues);
   };
   return (

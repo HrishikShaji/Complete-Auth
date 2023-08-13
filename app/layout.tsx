@@ -1,6 +1,7 @@
 import AuthProvider from "@/providers/AuthProvider";
 import "./globals.css";
 import QueryProvider from "@/providers/QueryProvider";
+import { ReduxProvider } from "@/providers/ReduxProvider";
 
 export default function RootLayout({
   children,
@@ -9,11 +10,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <QueryProvider>
-        <AuthProvider>
-          <body>{children}</body>
-        </AuthProvider>
-      </QueryProvider>
+      <ReduxProvider>
+        <QueryProvider>
+          <AuthProvider>
+            <body>{children}</body>
+          </AuthProvider>
+        </QueryProvider>
+      </ReduxProvider>
     </html>
   );
 }
