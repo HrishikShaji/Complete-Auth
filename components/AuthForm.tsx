@@ -12,6 +12,7 @@ type InputType = {
   name: string;
   value: string;
   placeholder: string;
+  errorMessage?: string;
 };
 
 type RegisterData = {
@@ -38,19 +39,25 @@ const AuthForm = () => {
     password: "",
   });
   const [loading, setLoading] = useState<boolean>(false);
-
+  const [focused, setFocused] = useState(false);
   const router = useRouter();
+
+  const handleFocus = (e: any) => {
+    setFocused(true);
+  };
 
   const loginInputs = [
     {
       name: "email",
       placeholder: "email...",
       value: loginValues.email,
+      type: "email",
     },
     {
       name: "password",
       placeholder: "password...",
       value: loginValues.password,
+      type: "password",
     },
   ];
 
@@ -59,21 +66,37 @@ const AuthForm = () => {
       name: "username",
       placeholder: "username...",
       value: registerValues.username,
+      errorMessage:
+        "Username should be 3-16 characters and shouldn't include any special characters",
+      required: true,
+      pattern: "^[A-Za-z0-9]{3,16}$",
     },
     {
       name: "email",
       placeholder: "email...",
       value: registerValues.email,
+      errorMessage: "It should be a valid email",
+      required: true,
+      type: "email",
     },
     {
       name: "password",
       placeholder: "password...",
       value: registerValues.password,
+      errorMessage:
+        "Password should be 8-20 characters and include at least 1 number,i letter and 1 special character",
+      required: true,
+      pattern: `^(?=.*[0-9])(?=.*[a-zA-Z])(?=.*[!@#$%^&*])[a-zA-Z0-9!@#$%^&*]{8,20}$`,
+      type: "password",
     },
     {
       name: "confirmPassword",
       placeholder: "confirm password...",
       value: registerValues.confirmPassword,
+      errorMessage: "Password do not match",
+      required: true,
+      pattern: registerValues.password,
+      type: "password",
     },
   ];
 
