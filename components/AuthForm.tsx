@@ -3,7 +3,7 @@ import React, { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { AiOutlineGoogle, AiOutlineGithub } from "react-icons/ai";
 import { BiLogoDiscordAlt } from "react-icons/bi";
 import InputItem from "./InputItem";
-import { signIn, useSession } from "next-auth/react";
+import { signIn, signOut, useSession } from "next-auth/react";
 import { toast } from "react-hot-toast";
 import { useRouter } from "next/navigation";
 import ClipLoader from "react-spinners/ClipLoader";
@@ -40,13 +40,6 @@ const AuthForm = () => {
   const [loading, setLoading] = useState<boolean>(false);
 
   const router = useRouter();
-  const session = useSession();
-
-  useEffect(() => {
-    if (session.status === "authenticated") {
-      router.push("/");
-    }
-  }, [session]);
 
   const loginInputs = [
     {
@@ -92,13 +85,33 @@ const AuthForm = () => {
     setLoginValues({ ...loginValues, [e.target.name]: e.target.value });
   };
 
-  const handleRegister = async (e: FormEvent) => {
+  const handleLogin = async (e: FormEvent, loginData: LoginData) => {
     e.preventDefault();
-    const registerData: RegisterData = {
-      name: registerValues.username,
-      email: registerValues.email,
-      password: registerValues.password,
-    };
+
+    try {
+      setLoading(true);
+      const response = await signIn("credentials", {
+        ...loginData,
+        redirect: false,
+      });
+      if (response?.error) {
+        toast.error(response.error);
+        setTimeout(async () => {
+          await signOut();
+        }, 2000);
+      }
+    } catch (error) {
+      toast.error("An error occured");
+    } finally {
+      setLoading(false);
+      router.push("/");
+    }
+
+    console.log(loginValues);
+  };
+
+  const handleRegister = async (e: FormEvent, registerData: RegisterData) => {
+    e.preventDefault();
 
     try {
       setLoading(true);
@@ -115,56 +128,30 @@ const AuthForm = () => {
       if (data?.error) {
         toast.error(data.error);
       } else {
-        const loginData: LoginData = {
-          email: registerValues.email,
-          password: registerValues.password,
-        };
-
-        const response = await signIn("credentials", {
-          ...loginData,
-          redirect: false,
+        await handleLogin(e, {
+          email: registerData.email,
+          password: registerData.password,
         });
-        if (response?.error) {
-          toast.error(response.error);
-        }
       }
     } catch (error) {
       toast.error("An error occured");
     } finally {
       setLoading(false);
-      router.push("/");
     }
   };
 
-  const handleLogin = async (e: FormEvent) => {
-    e.preventDefault();
-    const loginData: LoginData = {
-      email: loginValues.email,
-      password: loginValues.password,
-    };
-    try {
-      setLoading(true);
-      const response = await signIn("credentials", {
-        ...loginData,
-        redirect: false,
-      });
-      if (response?.error) {
-        toast.error(response.error);
-      }
-    } catch (error) {
-      toast.error("An error occured");
-    } finally {
-      setLoading(false);
-      router.push("/");
-    }
-
-    console.log(loginValues);
-  };
   return (
     <div className="bg-neutral-500 p-10 rounded-3xl flex flex-col gap-4 justify-center items-center">
       <div className="flex flex-col gap-4 items-center">
         {isLogin ? (
-          <form onSubmit={handleLogin} className="flex flex-col gap-2">
+          <form
+            onSubmit={(e: FormEvent) =>
+              handleLogin(e, {
+                email: loginValues.email,
+                password: loginValues.password,
+              })
+            }
+            className="flex flex-col gap-2">
             {loginInputs.map((loginInput: InputType, i: number) => (
               <InputItem
                 key={i}
@@ -179,7 +166,15 @@ const AuthForm = () => {
             </button>
           </form>
         ) : (
-          <form onSubmit={handleRegister} className="flex flex-col gap-2">
+          <form
+            onSubmit={(e: FormEvent) =>
+              handleRegister(e, {
+                name: registerValues.username,
+                email: registerValues.email,
+                password: registerValues.password,
+              })
+            }
+            className="flex flex-col gap-2">
             {registerInputs.map((registerInput: InputType, i: number) => (
               <InputItem
                 key={i}
